@@ -61,6 +61,8 @@ void ObjData::loadMtl(const std::string &mtlFileName)
 
 void ObjData::loadObject(const std::string &objFileName)
 {
+    isOk = false;
+
     std::fstream file(prefix + objFileName);
     if (!file.is_open())
     {
@@ -197,6 +199,8 @@ void ObjData::loadObject(const std::string &objFileName)
     std::cout << "nSyncedNormals: " << this->nSyncedNormals << std::endl;
 
     file.close();
+
+    isOk = true;
 
     return;
 }

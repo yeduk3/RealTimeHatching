@@ -39,6 +39,7 @@ struct ObjData
     GLuint nElements4 = 0;
     GLuint nNormals = 0;
     GLuint nSyncedNormals = 0;
+    bool isOk;
 
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec2> textures;
