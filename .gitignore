@@ -1,0 +1,8 @@
+*.pdf
+*/library/lib*
+.vscode
+*/include/GL*
+main.dSYM
+Thin Brushes Pack
+main
+.DS_Store
