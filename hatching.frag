@@ -39,8 +39,8 @@ void main()
     float tone = vsColor.x; // 0 dark, 1 light
 
     vec2 texCoord;
-    texCoord.y = acos((worldPosition.y - offset.y) / radius) / (3.141592 / k);
-    texCoord.x = asin((worldPosition.x - offset.x) / radius / sin(3.141592 * texCoord.y / k)) / (3.141592 / k);
+    texCoord.y = acos((worldPosition.y - offset.y) / radius) / 3.141592 * k;
+    texCoord.x = asin((worldPosition.x - offset.x) / radius / sin(3.141592 * texCoord.y)) / 3.141592 * k;
 
     vec3 color1, color2;
     color1.r = texture(tam0, texCoord).r;
