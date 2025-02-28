@@ -327,7 +327,7 @@ void init(GLFWwindow *window)
 
 // render //
 glm::vec3 lightPosition(10, 10, 5);
-glm::vec3 lightColor(120);
+glm::vec3 lightColor(160);
 glm::vec3 diffuseColor(1, 1, 1);
 glm::vec3 specularColor(0.33, 0.33, 0.33);
 float shininess = 12;
