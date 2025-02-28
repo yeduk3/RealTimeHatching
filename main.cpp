@@ -20,7 +20,10 @@
 // #define TEST_TAM
 
 // To Combine TAM Texture, define it. otherwise don't.
-#define TEXTURE_COMBINE
+// #define TEXTURE_COMBINE
+
+// To test cylinder(or sphere) mapping, define it. otherwise ~
+// #define TEST_CYLINDERMAP
 
 GLFWwindow *window;
 
@@ -202,7 +205,7 @@ GLuint cmVertexVBO, cmNormalVBO, cmElementVBO;
 
 Program tcProgram;
 
-GLuint tcVAO;
+GLuint tcVAO, tcVBO;
 GLuint tcTexture024, tcTexture135;
 
 void textureCombineInit(GLFWwindow *window)
@@ -210,10 +213,55 @@ void textureCombineInit(GLFWwindow *window)
     tamTexLoad();
 
     tcProgram.loadShader("texturecombine.vert", "texturecombine.frag");
+    tcProgram.linkShader();
+
+    glGenBuffers(1, &tcVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, tcVBO);
+    glBufferData(GL_ARRAY_BUFFER, testPoint.size() * sizeof(glm::vec4), testPoint.data(), GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &tcVAO);
+    glBindVertexArray(tcVAO);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (const void *)(2 * sizeof(float)));
 }
+
 void textureCombineRender(GLFWwindow *window)
 {
+    int w, h;
+    glfwGetFramebufferSize(window, &w, &h);
+    glViewport(0, 0, w, h);
+
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(tcProgram.programID);
+
+    GLuint tex0Loc = glGetUniformLocation(tcProgram.programID, "tex0");
+    GLuint tex1Loc = glGetUniformLocation(tcProgram.programID, "tex1");
+    GLuint tex2Loc = glGetUniformLocation(tcProgram.programID, "tex2");
+    glUniform1i(tex0Loc, 0);
+    glUniform1i(tex1Loc, 1);
+    glUniform1i(tex2Loc, 2);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, TAMTexture[0]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, TAMTexture[2]);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, TAMTexture[4]);
+
+    glBindVertexArray(tcVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, tcVBO);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, testPoint.size());
+
+    glfwSwapBuffers(window);
 }
+
+// Gouraud Shading //
+
+Program gouraudProgram;
 
 // init //
 
@@ -252,8 +300,8 @@ void init(GLFWwindow *window)
 
     glGenBuffers(1, &cmNormalVBO);
     glBindBuffer(GL_ARRAY_BUFFER, cmNormalVBO);
-    glBufferData(GL_ARRAY_BUFFER, obj.nSyncedNormals * sizeof(obj.normals[0]), obj.syncedNormals.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
+    glBufferData(GL_ARRAY_BUFFER, obj.nSyncedNormals * sizeof(obj.syncedNormals[0]), obj.syncedNormals.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 
     glGenBuffers(1, &cmElementVBO);
@@ -270,9 +318,19 @@ void init(GLFWwindow *window)
     }
     distX = maxX - minX, distY = maxY - minY;
     std::cout << "distX: " << distX << ", distY: " << distY << std::endl;
+
+    // Gouraud Shading //
+
+    gouraudProgram.loadShader("gouraud.vert", "hatching.frag");
+    gouraudProgram.linkShader();
 }
 
 // render //
+glm::vec3 lightPosition(10, 10, 5);
+glm::vec3 lightColor(120);
+glm::vec3 diffuseColor(1, 1, 1);
+glm::vec3 specularColor(0.33, 0.33, 0.33);
+float shininess = 12;
 
 void render(GLFWwindow *window)
 {
@@ -284,8 +342,6 @@ void render(GLFWwindow *window)
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(cmProgram.programID);
-
     // glm::mat4 modelMat = glm::translate(glm::vec3(0, -1.4, 0));
     glm::mat4 modelMat(1);
     glm::vec3 eye(0, 0, 5);
@@ -294,6 +350,12 @@ void render(GLFWwindow *window)
     glm::vec3 eyePosition = rotateX * rotateY * glm::vec4(eye, 1);
     glm::mat4 viewMat = glm::lookAt(eyePosition, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
     glm::mat4 projMat = glm::perspective(fovy, w / (float)h, 0.0001f, 1000.0f);
+
+#ifdef TEST_CYLINDERMAP
+    // Cylindrical? Map Program
+
+    glUseProgram(cmProgram.programID);
+
     GLuint mmLoc = glGetUniformLocation(cmProgram.programID, "modelMat");
     GLuint vmLoc = glGetUniformLocation(cmProgram.programID, "viewMat");
     GLuint pmLoc = glGetUniformLocation(cmProgram.programID, "projMat");
@@ -313,6 +375,55 @@ void render(GLFWwindow *window)
     GLuint ofLoc = glGetUniformLocation(cmProgram.programID, "offset");
     glm::vec2 offset(minX + distX / 2, minY + distY / 2);
     glUniform2fv(ofLoc, 1, glm::value_ptr(offset));
+
+#else
+
+    // Gouraud Program //
+
+    glUseProgram(gouraudProgram.programID);
+
+    GLuint mmLoc = glGetUniformLocation(gouraudProgram.programID, "modelMat");
+    GLuint vmLoc = glGetUniformLocation(gouraudProgram.programID, "viewMat");
+    GLuint pmLoc = glGetUniformLocation(gouraudProgram.programID, "projMat");
+    glUniformMatrix4fv(mmLoc, 1, GL_FALSE, glm::value_ptr(modelMat));
+    glUniformMatrix4fv(vmLoc, 1, GL_FALSE, glm::value_ptr(viewMat));
+    glUniformMatrix4fv(pmLoc, 1, GL_FALSE, glm::value_ptr(projMat));
+
+    GLuint lightPositionLoc = glGetUniformLocation(gouraudProgram.programID, "lightPosition");
+    GLuint eyePositionLoc = glGetUniformLocation(gouraudProgram.programID, "eyePosition");
+    GLuint lightColorLoc = glGetUniformLocation(gouraudProgram.programID, "lightColor");
+    GLuint diffuseColorLoc = glGetUniformLocation(gouraudProgram.programID, "diffuseColor");
+    GLuint specularColorLoc = glGetUniformLocation(gouraudProgram.programID, "specularColor");
+    GLuint shininessLoc = glGetUniformLocation(gouraudProgram.programID, "shininess");
+
+    glUniform3fv(lightPositionLoc, 1, glm::value_ptr(lightPosition));
+    glUniform3fv(eyePositionLoc, 1, glm::value_ptr(eyePosition));
+    glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
+    glUniform3fv(diffuseColorLoc, 1, glm::value_ptr(diffuseColor));
+    glUniform3fv(specularColorLoc, 1, glm::value_ptr(specularColor));
+    glUniform1f(shininessLoc, shininess);
+
+    std::string tamvar = "tam0";
+    std::vector<GLenum> texId{GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5};
+    for (int i = 0; i < TONE_COUNT; i++)
+    {
+        std::cout << "Texture Activate: tamvar = " << tamvar << std ::endl;
+        GLuint ttLoc = glGetUniformLocation(gouraudProgram.programID, tamvar.c_str());
+        glUniform1i(ttLoc, i);
+        glActiveTexture(texId[i]);
+        glBindTexture(GL_TEXTURE_2D, TAMTexture[i]);
+        tamvar[3]++;
+    }
+
+    GLuint raLoc = glGetUniformLocation(gouraudProgram.programID, "radius");
+    glUniform1f(raLoc, distX / 2);
+    GLuint heLoc = glGetUniformLocation(gouraudProgram.programID, "height");
+    glUniform1f(heLoc, distY);
+    GLuint ofLoc = glGetUniformLocation(gouraudProgram.programID, "offset");
+    glm::vec2 offset(minX + distX / 2, minY + distY / 2);
+    glUniform2fv(ofLoc, 1, glm::value_ptr(offset));
+
+#endif
 
     glBindVertexArray(cmVAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cmElementVBO);
@@ -344,7 +455,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
 
-    GLFWwindow *window = glfwCreateWindow(128, 128, "TAM", 0, 0);
+    GLFWwindow *window = glfwCreateWindow(640, 480, "TAM", 0, 0);
     glfwMakeContextCurrent(window);
 
     if (glewInit() != GLEW_OK)
