@@ -35,13 +35,12 @@ const float t[7] = float[7](0.0, float(1) / 6, float(2) / 6, float(3) / 6, float
 void main()
 {
     // first - one blend ratio
-
+    vec3 N = normalize(normal);
     float tone = vsColor.x; // 0 dark, 1 light
 
     vec2 texCoord;
-    float theta = acos((worldPosition.y - offset.y) / radius);
-    texCoord.y = theta / 3.141592 * k;
-    texCoord.x = asin((worldPosition.x - offset.x) / (radius)) / 3.141592 * k;
+    texCoord.y = acos(N.y) / 3.141592 * k;
+    texCoord.x = atan(N.x, N.z) / 3.141592 * k;
 
     vec3 color1, color2;
     color1.r = texture(tam0, texCoord).r;
