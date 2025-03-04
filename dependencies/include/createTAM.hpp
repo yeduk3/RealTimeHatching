@@ -26,8 +26,8 @@ const glm::vec2 strokeTexRB(0.95, 0.05);
 
 Program program;
 
-GLuint testTAMVAO;
-GLuint testTAMVBO;
+GLuint createTAMVAO;
+GLuint createTAMVBO;
 
 GLuint strokeTexture;
 
@@ -72,7 +72,7 @@ Stroke createStroke()
     return stroke;
 }
 
-void init(GLFWwindow *window)
+void createTAMInit(GLFWwindow *window)
 {
     program.loadShader("stroke.vert", "stroke.frag");
     program.loadGeomShader("stroke.geom");
@@ -104,12 +104,12 @@ void init(GLFWwindow *window)
 
     // Send Data to Buffer //
 
-    glGenBuffers(1, &testTAMVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, testTAMVBO);
+    glGenBuffers(1, &createTAMVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, createTAMVBO);
     glBufferData(GL_ARRAY_BUFFER, testPoint.size() * sizeof(glm::vec4), testPoint.data(), GL_STATIC_DRAW);
 
-    glGenVertexArrays(1, &testTAMVAO);
-    glBindVertexArray(testTAMVAO);
+    glGenVertexArrays(1, &createTAMVAO);
+    glBindVertexArray(createTAMVAO);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
     glEnableVertexAttribArray(1);
@@ -138,7 +138,7 @@ void init(GLFWwindow *window)
     stbi_image_free(data);
 }
 
-void render(GLFWwindow *window)
+void createTAMRender(GLFWwindow *window)
 {
 
     int w, h;
@@ -149,8 +149,8 @@ void render(GLFWwindow *window)
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program.programID);
-    glBindVertexArray(testTAMVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, testTAMVBO);
+    glBindVertexArray(createTAMVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, createTAMVBO);
 
     GLuint strokeTexLoc = glGetUniformLocation(program.programID, "strokeTex");
     glUniform1d(strokeTexLoc, 0);

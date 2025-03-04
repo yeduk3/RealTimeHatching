@@ -278,7 +278,7 @@ void init(GLFWwindow *window)
     glfwSetKeyCallback(window, keyCallback);
 
     obj.setPrefix("obj");
-    obj.loadObject("sphere.obj");
+    obj.loadObject("Ball1 Sphere.obj");
     if (!obj.isOk)
     {
         std::cerr << "Obj read failed" << std::endl;
@@ -321,13 +321,14 @@ void init(GLFWwindow *window)
 
     // Gouraud Shading //
 
-    gouraudProgram.loadShader("gouraud.vert", "hatching.frag");
+    // gouraudProgram.loadShader("gouraud.vert", "hatching.frag");
+    gouraudProgram.loadShader("phong.vert", "phonghatching.frag");
     gouraudProgram.linkShader();
 }
 
 // render //
 glm::vec3 lightPosition(10, 10, 5);
-glm::vec3 lightColor(160);
+glm::vec3 lightColor(140);
 glm::vec3 diffuseColor(1, 1, 1);
 glm::vec3 specularColor(0.33, 0.33, 0.33);
 float shininess = 12;
@@ -343,7 +344,7 @@ void render(GLFWwindow *window)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // glm::mat4 modelMat = glm::translate(glm::vec3(0, -1.4, 0));
-    glm::mat4 modelMat(1);
+    glm::mat4 modelMat = glm::scale(glm::vec3(0.01));
     glm::vec3 eye(0, 0, 5);
     glm::mat4 rotateX = glm::rotate(cameraTheta, glm::vec3(0, 1, 0));
     glm::mat4 rotateY = glm::rotate(cameraPhi, glm::vec3(1, 0, 0));
@@ -407,7 +408,7 @@ void render(GLFWwindow *window)
     std::vector<GLenum> texId{GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5};
     for (int i = 0; i < TONE_COUNT; i++)
     {
-        std::cout << "Texture Activate: tamvar = " << tamvar << std ::endl;
+        // std::cout << "Texture Activate: tamvar = " << tamvar << std ::endl;
         GLuint ttLoc = glGetUniformLocation(gouraudProgram.programID, tamvar.c_str());
         glUniform1i(ttLoc, i);
         glActiveTexture(texId[i]);
